@@ -14,51 +14,51 @@ include("$ENV{VITASDK}/share/vita.cmake" REQUIRED)
 file(GLOB_RECURSE sources *.c)
 
 add_executable(SceLibcPosix $<TARGET_OBJECTS:crt0_module>
-    ${sources}
+  ${sources}
 )
-
-add_dependencies(SceLibcPosix SceLibcExt_stub_weak)
 
 target_compile_options(SceLibcPosix PRIVATE -fno-lto)
 
 target_include_directories(SceLibcPosix PRIVATE ../include include internal)
 
-link_directories(${CMAKE_BINARY_DIR}/SceLibcExt)
-
 target_link_libraries(SceLibcPosix PRIVATE
-    -nostdlib
-    -nostartfiles
-    -nodefaultlibs
-    SceRtc_stub
-    SceNetCtl_stub_weak
-    SceNet_stub_weak
-    SceProcessmgr_stub
-    SceSysmodule_stub
-    SceKernelThreadMgr_stub
-    SceIofilemgr_stub_weak
-    SceFios2_stub_weak
-    SceLibcExt_stub_weak
-    SceLibKernel_stub
-    gcc
+  SceRtc_stub
+  SceNetCtl_stub_weak
+  SceNet_stub_weak
+  SceProcessmgr_stub
+  SceSysmodule_stub
+  SceKernelThreadMgr_stub
+  SceIofilemgr_stub
+  SceFios2_stub_weak
+  ${CMAKE_BINARY_DIR}/SceLibcExt_stub/libSceLibcExt_stub_weak.a
+  SceLibKernel_stub
+  SceRtabi_stub
 )
 
-vita_create_self(SceLibcPosix.suprx SceLibcPosix PRIVATE
-    CONFIG exports.yml
-    UNSAFE
+set_target_properties(SceLibcPosix
+  PROPERTIES LINK_FLAGS "-nostdlib"
+  COMPILE_FLAGS "-D__PSP2_USER__"
+)
+
+vita_create_self(libc_posix.suprx SceLibcPosix PRIVATE
+  CONFIG exports.yml
+  UNSAFE
+  STRIPPED
+  REL_OPTIMIZE
 )
 
 vita_create_stubs(stubs SceLibcPosix ${CMAKE_CURRENT_SOURCE_DIR}/exports.yml)
 
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/stubs/
-    DESTINATION lib
-    FILES_MATCHING PATTERN "*.a"
+  DESTINATION lib
+  FILES_MATCHING PATTERN "*.a"
 )
 
 install(FILES ${CMAKE_BINARY_DIR}/SceLibcExt/libSceLibcExt_stub.a
-    ${CMAKE_BINARY_DIR}/SceLibcExt/libSceLibcExt_stub_weak.a
-    DESTINATION lib
+  ${CMAKE_BINARY_DIR}/SceLibcExt/libSceLibcExt_stub_weak.a
+  DESTINATION lib
 )
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/SceLibcPosix.suprx
-    DESTINATION "$ENV{VITASDK}/arm-vita-eabi/modules"
+  DESTINATION "$ENV{VITASDK}/arm-vita-eabi/modules"
 )
